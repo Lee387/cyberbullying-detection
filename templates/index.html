@@ -1,1 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyberbullying Detection System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 700px;
+            width: 100%;
+            padding: 40px;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 100px;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-classify {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-classify:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-classify:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-clear {
+            background: #f0f0f0;
+            color: #333;
+            flex: 0.5;
+        }
+
+        .btn-clear:hover {
+            background: #e0e0e0;
+        }
+
+        .result-container {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 5px solid #667eea;
+            background: #f9f9f9;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .result-container.show {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .result-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .confidence-badge {
+            background: #667eea;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 10px 16px;
+            border-radius: 6px;
+            color: white;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .category-description {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .preprocessed-section {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        .preprocessed-label {
+            font-size: 12px;
+            color: #999;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .preprocessed-text {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #555;
+            background: #f5f5f5;
+            padding: 8px;
+            border-radius: 4px;
+            word-break: break-word;
+            line-height: 1.5;
+        }
+
+        .error-message {
+            background: #fee;
+            border: 1px solid #fcc;
+            border-radius: 6px;
+            color: #c33;
+            padding: 12px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .info-section {
+            background: #f5f7ff;
+            border: 1px solid #e0e6ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .info-section strong {
+            color: #333;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+            color: #999;
+            font-size: 12px;
+        }
+
+        .character-count {
+            text-align: right;
+            color: #999;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            button {
+                font-size: 14px;
+                padding: 10px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn-clear {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🛡️ Cyberbullying Detection</h1>
+            <p>Paste a tweet to analyze for cyberbullying content</p>
+        </div>
+
+        <!-- Input Form -->
+        <div class="error-message" id="errorMessage"></div>
+
+        <form id="classificationForm" onsubmit="classifyTweet(event)">
+            <div class="form-group">
+                <label for="tweetInput">Paste Tweet Here</label>
+                <textarea 
+                    id="tweetInput" 
+                    placeholder="Copy and paste a tweet from X (Twitter) here..." 
+                    required
+                ></textarea>
+                <div class="character-count" id="charCount">0 characters</div>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn-classify" id="classifyBtn">Classify Tweet</button>
+                <button type="button" class="btn-clear" onclick="clearForm()">Clear</button>
+            </div>
+        </form>
+
+        <!-- Loading Indicator -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #667eea; font-size: 14px;">Analyzing tweet...</p>
+        </div>
+
+        <!-- Results Display -->
+        <div class="result-container" id="resultContainer">
+            <div class="result-header">
+                <div class="result-title">Classification Result</div>
+                <div class="confidence-badge" id="confidenceBadge">0% Confidence</div>
+            </div>
+
+            <div class="category-badge" id="categoryBadge" style="background: #667eea;">
+                Loading...
+            </div>
+
+            <div class="category-description" id="categoryDescription"></div>
+
+            <div class="preprocessed-section">
+                <div class="preprocessed-label">Original Tweet</div>
+                <div class="preprocessed-text" id="originalTweet"></div>
+            </div>
+
+            <div class="preprocessed-section">
+                <div class="preprocessed-label">Preprocessed Text (after cleaning, tokenization, stemming)</div>
+                <div class="preprocessed-text" id="preprocessedText"></div>
+            </div>
+        </div>
+
+        <!-- Model Info -->
+        <div class="info-section">
+            <strong>About this model:</strong><br>
+            ✓ Algorithm: Support Vector Machine (SVM)<br>
+            ✓ Accuracy: 89.0% on test set<br>
+            ✓ Categories: 6 types of cyberbullying<br>
+            ✓ Feature extraction: TF-IDF with 2,553 features
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>Developed for BINUS University Pre-Thesis Research | Department of Information Systems</p>
+        </div>
+    </div>
+
+    <script>
+        // Character counter
+        document.getElementById('tweetInput').addEventListener('input', function() {
+            document.getElementById('charCount').textContent = this.value.length + ' characters';
+        });
+
+        // Classify tweet
+        async function classifyTweet(event) {
+            event.preventDefault();
+            
+            const tweetText = document.getElementById('tweetInput').value.trim();
+            const errorDiv = document.getElementById('errorMessage');
+            const resultDiv = document.getElementById('resultContainer');
+            const loadingDiv = document.getElementById('loading');
+            const classifyBtn = document.getElementById('classifyBtn');
+            
+            // Hide previous errors and results
+            errorDiv.classList.remove('show');
+            resultDiv.classList.remove('show');
+            loadingDiv.style.display = 'block';
+            classifyBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/classify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ tweet: tweetText })
+                });
+                
+                const data = await response.json();
+                
+                loadingDiv.style.display = 'none';
+                classifyBtn.disabled = false;
+                
+                if (response.ok) {
+                    // Display results
+                    displayResults(data);
+                } else {
+                    showError(data.error || 'Classification failed');
+                }
+            } catch (error) {
+                loadingDiv.style.display = 'none';
+                classifyBtn.disabled = false;
+                showError('Network error: ' + error.message);
+            }
+        }
+
+        function displayResults(data) {
+            const resultDiv = document.getElementById('resultContainer');
+            const categoryBadge = document.getElementById('categoryBadge');
+            const categoryDescription = document.getElementById('categoryDescription');
+            const confidenceBadge = document.getElementById('confidenceBadge');
+            const originalTweet = document.getElementById('originalTweet');
+            const preprocessedText = document.getElementById('preprocessedText');
+
+            const isSafe = data.prediction === 'Bukan Cyberbullying';
+
+            // Update result card border color
+            resultDiv.style.borderLeftColor = isSafe ? '#4CAF50' : '#FF6B6B';
+            resultDiv.style.background = isSafe ? '#f0fff4' : '#f9f9f9';
+
+            // Category badge
+            categoryBadge.textContent = isSafe ? '✅ ' + data.prediction : '⚠️ ' + data.prediction;
+            categoryBadge.style.backgroundColor = data.color;
+
+            // Confidence badge
+            confidenceBadge.textContent = (data.confidence * 100).toFixed(0) + '% Confidence';
+            confidenceBadge.style.backgroundColor = isSafe ? '#4CAF50' : '#667eea';
+
+            categoryDescription.textContent = data.description;
+            originalTweet.textContent = data.original_tweet;
+            preprocessedText.textContent = data.preprocessed_text;
+
+            resultDiv.classList.add('show');
+
+            // Scroll to results
+            setTimeout(() => {
+                resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = '❌ ' + message;
+            errorDiv.classList.add('show');
+        }
+
+        function clearForm() {
+            document.getElementById('tweetInput').value = '';
+            document.getElementById('charCount').textContent = '0 characters';
+            document.getElementById('resultContainer').classList.remove('show');
+            document.getElementById('errorMessage').classList.remove('show');
+        }
+
+        // Allow Enter key to submit (Ctrl+Enter)
+        document.getElementById('tweetInput').addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                document.getElementById('classificationForm').dispatchEvent(new Event('submit'));
+            }
+        });
+    </script>
+</body>
+</html>
